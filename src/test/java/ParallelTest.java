@@ -23,17 +23,17 @@ public class ParallelTest {
         threadLocal.set(driver);
     }
 
-    @DataProvider(name = "csv", parallel = true)
+    @AfterMethod
+    public void tearDown() {
+        threadLocal.get().quit();
+    }
+
+    @DataProvider(name = "csv-data", parallel = true)
     public static Object[][] getCsvData() {
         return new Object[5][0];
     }
 
-    @Test(dataProvider = "csv")
+    @Test(dataProvider = "csv-data")
     public void dataDrivenTest() {
-    }
-
-    @AfterMethod
-    public void tearDown() {
-        threadLocal.get().quit();
     }
 }
