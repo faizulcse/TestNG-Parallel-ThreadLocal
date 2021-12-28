@@ -1,3 +1,4 @@
 .idea/
 TestNG-Parallel-ThreadLocal.iml
 target/
+chromedriver_log.txt
