@@ -2,8 +2,8 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.testng.ITestContext;
 import org.testng.annotations.*;
+import utils.ResourceHelper;
 
 import java.io.FileOutputStream;
 import java.lang.reflect.Method;
@@ -12,22 +12,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public abstract class BaseTest {
-    public static ThreadLocal<WebDriver> driverThread;
-    public static ThreadLocal<String> testNameThread;
+    public static ResourceHelper config = new ResourceHelper().getResource("config");
+    public static ThreadLocal<WebDriver> driverThread = new ThreadLocal<>();
+    public static ThreadLocal<String> testNameThread = new ThreadLocal<>();
 
     @BeforeSuite
     public void setUp() {
-        driverThread = new ThreadLocal<>();
-        testNameThread = new ThreadLocal<>();
-        Logger.getLogger("org.openqa.selenium").setLevel(Level.OFF);
-        System.setProperty(ChromeDriverService.CHROME_DRIVER_EXE_PROPERTY, System.getProperty("user.dir") + "/driver/chromedriver.exe");
-        System.setProperty(ChromeDriverService.CHROME_DRIVER_SILENT_OUTPUT_PROPERTY, "true");
     }
 
     @AfterSuite
     public void tearDown() {
-        testNameThread.remove();
-        driverThread.remove();
     }
 
     @BeforeTest
@@ -48,26 +42,28 @@ public abstract class BaseTest {
 
     @BeforeMethod
     public void beforeMethod(Method method, Object[] data) {
-//        openBrowser();
-        testNameThread.set(method.getName());
+        openBrowser();
     }
 
     @AfterMethod
     public void afterMethod() {
-        System.out.println(testNameThread.get());
-//        closeBrowser();
+        closeBrowser();
     }
 
     public void openBrowser() {
         try {
+            Logger.getLogger("org.openqa.selenium").setLevel(Level.OFF);
+            System.setProperty(ChromeDriverService.CHROME_DRIVER_EXE_PROPERTY, System.getProperty("user.dir") + "/driver/chromedriver.exe");
+            System.setProperty(ChromeDriverService.CHROME_DRIVER_SILENT_OUTPUT_PROPERTY, "true");
+
             ChromeDriverService service = new ChromeDriverService.Builder().build();
             service.sendOutputTo(new FileOutputStream("chromedriver_log.txt"));
             ChromeOptions options = new ChromeOptions();
-            options.setHeadless(true);
+            options.setHeadless(config.getBoolean("headless"));
 
             WebDriver driver = new ChromeDriver(service, options);
-            driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-            driver.get("https://google.com");
+            driver.manage().timeouts().implicitlyWait(config.getInteger("wait"), TimeUnit.SECONDS);
+            driver.get(config.getString("url"));
             driverThread.set(driver);
         } catch (Exception e) {
             e.printStackTrace();
@@ -75,7 +71,6 @@ public abstract class BaseTest {
     }
 
     public void closeBrowser() {
-        // take screenshot
         driverThread.get().quit();
     }
 }
